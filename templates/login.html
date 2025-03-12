@@ -4,11 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Slack Login</title>
+    <!-- Bulma CSS 추가 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <style>
+        body {
+            background-color: #F4F4F8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .login-container {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+            width: 350px;
+        }
+        .login-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            color: #4A154B;
+        }
+        .slack-button {
+            background-color: #4A154B;
+            color: white;
+            font-size: 18px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            transition: background 0.3s ease-in-out;
+            width: 100%;
+        }
+        .slack-button:hover {
+            background-color: #611F69;
+        }
+        .slack-logo {
+            width: 24px;
+            margin-right: 8px;
+        }
+    </style>
 </head>
 <body>
-    <h2>Login with Slack</h2>
-    <a href="{{ url_for('oauth') }}">
-        <button>Login with Slack</button>
-    </a>
+    <div class="login-container">
+        <h2 class="login-title">공구장터 로그인</h2>
+        <a href="{{ url_for('oauth') }}">
+            <button class="button slack-button">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/7/76/Slack_Icon.png" class="slack-logo" alt="Slack Logo">
+                Login with Slack
+            </button>
+        </a>
+    </div>
 </body>
 </html>

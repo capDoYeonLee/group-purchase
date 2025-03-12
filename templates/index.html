@@ -89,7 +89,7 @@
                     <th>가격</th>
                     <th>마감기한</th>
                     <th>카테고리</th>
-                    <th>배송비 여부</th>
+                    <th>배송비 면제 여부</th>
                 </tr>
             </thead>
             <tbody id="product-list">
@@ -118,7 +118,7 @@
                             <td>${product.price}</td>
                             <td>${product.deadline}</td>
                             <td>${product.category}</td>
-                            <td>${product.shipping}</td>
+                            <td>${product.condition}</td>
                         </tr>`;
                 tbody.innerHTML += row;
             });

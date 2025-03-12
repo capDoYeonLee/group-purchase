@@ -65,7 +65,7 @@
         <input type="text" id="product-price" placeholder="상품 가격">
         <input type="text" id="product-deadline" placeholder="마감 기한(YYYY-MM-DD)">
         <input type="text" id="product-shipping" placeholder="배송비">
-        <input type="text" id="product-condition" placeholder="배송비 면제 조건">
+
         <input type="text" id="product-message" placeholder="최종 구매 메시지">
         <input type="text" id="product-category" placeholder="카테고리 분류">
         <input type="text" id="product-quantity" placeholder="상품 구매 희망수량">
@@ -80,7 +80,7 @@
             const item_price = document.getElementById("product-price").value;
             const deadline = document.getElementById("product-deadline").value;
             const delivery_fee = document.getElementById("product-shipping").value;
-            const free_delivery_cond = document.getElementById("product-condition").value;
+            //const free_delivery_cond = document.getElementById("product-condition").value;
             const confirmation_msg = document.getElementById("product-message").value;
             const category = document.getElementById("product-category").value;
             const item_count = document.getElementById("product-quantity").value;
@@ -98,7 +98,7 @@
                     "Authorization": `Bearer ${accessToken}`  // Authorization 헤더 추가
                 },
                 data: { 'title': title, 'item_name':item_name, 'item_url':item_url, 'item_price':item_price, 
-                        'deadline':deadline, 'delivery_fee':delivery_fee, 'free_delivery_cond':free_delivery_cond, 
+                        'deadline':deadline, 'delivery_fee':delivery_fee, 
                         'confirmation_msg':confirmation_msg, 'category':category, 'item_count':item_count },
                 success: function (response) { 
                     if (response["result"] == "success") {
@@ -109,15 +109,4 @@
                     }
                 }
             })
-            window.location.href = "index.html"; // 메인 페이지로 이동
-        }
-
-        function getCookie(name) {
-            let matches = document.cookie.match(new RegExp(
-            "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
-            ));
-            return matches ? decodeURIComponent(matches[1]) : undefined;
-        }
-    </script>
-</body>
-</html>
+            window.loca

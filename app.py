@@ -4,6 +4,7 @@ from pymongo import MongoClient
 from datetime import datetime, timedelta, timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 import jwt
+from functools import wraps
 from bson.objectid import ObjectId
 from flask_cors import CORS
 
@@ -33,6 +34,27 @@ def decode_token():
         return None  # 토큰 만료
     except jwt.InvalidTokenError:
         return None  # 유효하지 않은 토큰
+
+def jwt_required(func):
+    @wraps(func)
+    def authenticated_function(*args, **kwargs):
+        token = request.cookies.get("access_token")
+
+        if not token:
+            return jsonify({"error": "Authentication required"}), 401
+
+        try:
+            # JWT 토큰을 검증하고 해석
+            jwt.decode(token, key=JWT_SECRET, algorithms=["HS256"])
+
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Access Token이 만료되었습니다."}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Access Token 형식이 유효하지 않습니다."}), 401
+
+        return func(*args, **kwargs)
+
+    return authenticated_function
 
 
 @app.route('/')
@@ -74,6 +96,7 @@ def find_product(id):
 ''' 모든 상품 게시글 조회'''
 @app.route('/api/products', methods=['GET'])
 def getAllProducts():
+    check_ship_condition()
     result = list(db.boards.find({}))
     
     formatted_products = [
@@ -83,7 +106,7 @@ def getAllProducts():
             "price": f"{product['price']}원",  # 가격에 "원" 추가
             "deadline": product["deadline"],  # 날짜 형식 그대로 사용
             "category": product["category"],
-            "shipping": product["shipping"]
+            "condition": product["condition"]
         }
         for product in result
     ]
@@ -93,7 +116,9 @@ def getAllProducts():
 
 
 '''상품 게시글 생성'''
+
 @app.route('/api/product', methods=['POST'])
+@jwt_required
 def createProduct():
     userId = decode_token()
     print("!!!!!!here!!!!!!!", userId)
@@ -107,7 +132,8 @@ def createProduct():
     price = request.form['item_price']
     deadline = request.form['deadline'] # 2025-03-03, YYYY-MM-DD
     shipping = request.form['delivery_fee']
-    condition = request.form['free_delivery_cond']
+    condition = "N"
+    #condition = request.form['free_delivery_cond']
     message = request.form['confirmation_msg']
     category = request.form['category']
     quantity = request.form['item_count']
@@ -120,6 +146,30 @@ def createProduct():
     
     db.boards.insert_one(product)
     return jsonify({'result': 'success'})
+
+
+
+def check_ship_condition():
+    result = list(db.boards.find({}))
+
+    for product in result:
+        price = product['price']
+        quantity = product['quantity']
+        shipping = product['shipping']
+        
+        # price * quantity가 shipping보다 크면 condition을 "Y"로 업데이트
+        if int(price) * int(quantity) >= int(shipping):
+            db.boards.update_one(
+                {'_id': product['_id']},
+                {'$set': {'condition': 'Y'}}
+            )
+        else:
+            # 기본값을 "N"으로 설정
+            db.boards.update_one(
+                {'_id': product['_id']},
+                {'$set': {'condition': 'N'}})
+
+
 
 
 '''마감일이 지난 상품 검색 -> 해당 메서드는 APScheduler를 통해 실행'''
@@ -264,6 +314,7 @@ def generate_token(user, token_expiry_days):
 ''' 
 
 @app.route('/new_comment', methods=['POST']) #id는 자동생성되는 친구 쓰는거로~
+@jwt_required
 def new_comment():
     print(request.form['post_id'])
     post_id = ObjectId(request.form['post_id'])  # 댓글을 추가할 게시글 ID
