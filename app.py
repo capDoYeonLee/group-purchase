@@ -7,10 +7,9 @@ import jwt
 from functools import wraps
 from bson.objectid import ObjectId
 from flask_cors import CORS
+import threading
 
 app = Flask(__name__)
-
-
 
 
 client = MongoClient('localhost', 27017)
@@ -18,6 +17,9 @@ db = client.boards
 users_collection = db.users
 tokens_collection = db.tokens
 CORS(app, supports_credentials=True)
+
+scheduler = BackgroundScheduler(daemon=True)
+scheduler.start()
 
 def decode_token():
     auth_header = request.headers.get("Authorization")
@@ -178,13 +180,17 @@ def check_expired_products():
     print("scheduling!")
     now = datetime.now().strftime("%Y-%m-%d")  # 날짜를 "YYYY-MM-DD" 형식의 문자열로 변환
     
-    # 마감 기한이 지난 게시글 조회
-    expired_products = db.boards.find({
-        "deadline": {"$lt": now},  # 문자열 비교
-        "expired": {"$ne": True}
-    })
+    # # 마감 기한이 지난 게시글 조회
+    # expired_products = db.boards.find({
+    #     "deadline": {"$lt": now},  # 문자열 비교
+    #     "expired": {"$ne": True}
+    # })
+    expired_products = db.boards.find({})
+    print(expired_products)
     
     for product in expired_products:
+        print("*")
+        print(product)
         send_messageToparticipants(product)
         send_messageToOwner(product)
         db.boards.update_one(
@@ -237,6 +243,7 @@ def oauth():
         f"client_id={SLACK_CLIENT_ID}"
         "&scope=&user_scope=email,openid,profile"
         f"&redirect_uri={SLACK_REDIRECT_URI}"
+        "&team=A08HEHGMUQL"
     )
     return redirect(slack_auth_url)
 
@@ -316,6 +323,8 @@ def generate_token(user, token_expiry_days):
 @app.route('/new_comment', methods=['POST']) #id는 자동생성되는 친구 쓰는거로~
 @jwt_required
 def new_comment():
+    run_time = datetime.now() + timedelta(seconds=10)
+    scheduler.add_job(check_expired_products, 'date', run_date=run_time)
     print(request.form['post_id'])
     post_id = ObjectId(request.form['post_id'])  # 댓글을 추가할 게시글 ID
     #comment_author = 댓글 작성장의 슬렉 계정정
@@ -514,12 +523,7 @@ def buy_product(id):
     else:
         return jsonify({"result": "fail", "message": "오류 발생으로 재시도 바랍니다."})
 
-
-
 if __name__ == '__main__':
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(check_expired_products, 'interval', minutes=1)  # 5분마다 실행
-    scheduler.start()
     app.run('0.0.0.0', port=5001, debug=True)
     
 
