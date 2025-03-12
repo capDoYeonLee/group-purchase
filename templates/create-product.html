@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+        integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+
+    <!-- JS -->
+    <script   src="https://code.jquery.com/jquery-3.6.0.min.js"   integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="   crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+        integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+        crossorigin="anonymous"></script>
+
+    <!-- 구글폰트 -->
+    <link href="https://fonts.googleapis.com/css?family=Stylish&display=swap" rel="stylesheet">
+
+    <title>상품 생성</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f8f8f8;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #5c67f2;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #4a54e1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>상품의 정보를 입력해 주세요.</h2>
+        <input type="text" id="board-name" placeholder="게시글 제목">
+        <input type="text" id="product-name" placeholder="상품 이름">
+        <input type="text" id="product-link" placeholder="상품 링크">
+        <input type="text" id="product-price" placeholder="상품 가격">
+        <input type="text" id="product-deadline" placeholder="마감 기한(YYYY-MM-DD)">
+        <input type="text" id="product-shipping" placeholder="배송비">
+        <input type="text" id="product-condition" placeholder="배송비 면제 조건">
+        <input type="text" id="product-message" placeholder="최종 구매 메시지">
+        <input type="text" id="product-category" placeholder="카테고리 분류">
+        <input type="text" id="product-quantity" placeholder="상품 구매 희망수량">
+        <button type="submit" class="btn btn-primary" onclick="createProduct()">생성</button>
+    </div>
+
+    <script> 
+        function createProduct() {
+            const title = document.getElementById("board-name").value;
+            const item_name = document.getElementById("product-name").value;
+            const item_url = document.getElementById("product-link").value;
+            const item_price = document.getElementById("product-price").value;
+            const deadline = document.getElementById("product-deadline").value;
+            const delivery_fee = document.getElementById("product-shipping").value;
+            const free_delivery_cond = document.getElementById("product-condition").value;
+            const confirmation_msg = document.getElementById("product-message").value;
+            const category = document.getElementById("product-category").value;
+            const item_count = document.getElementById("product-quantity").value;
+
+            // if (!name || !price || !category) {
+            //     alert("상품 이름, 가격, 카테고리는 필수 입력 사항입니다.");
+            //     return;
+            // }
+            const accessToken = getCookie("access_token");
+            console.log(accessToken);
+            $.ajax({
+                type: "POST",
+                url: 'api/product',
+                headers: {
+                    "Authorization": `Bearer ${accessToken}`  // Authorization 헤더 추가
+                },
+                data: { 'title': title, 'item_name':item_name, 'item_url':item_url, 'item_price':item_price, 
+                        'deadline':deadline, 'delivery_fee':delivery_fee, 'free_delivery_cond':free_delivery_cond, 
+                        'confirmation_msg':confirmation_msg, 'category':category, 'item_count':item_count },
+                success: function (response) { 
+                    if (response["result"] == "success") {
+                        alert("상품 생성 성공");
+                        window.location.href = "index.html";
+                    } else {
+                        alert("server error");
+                    }
+                }
+            })
+            window.location.href = "index.html"; // 메인 페이지로 이동
+        }
+
+        function getCookie(name) {
+            let matches = document.cookie.match(new RegExp(
+            "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+            ));
+            return matches ? decodeURIComponent(matches[1]) : undefined;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+
+    <!-- Bootstrap CSS -->
+    
+
+    <!-- JS -->
+    <script   src="https://code.jquery.com/jquery-3.6.0.min.js"   integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="   crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+        integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+        crossorigin="anonymous"></script>
+
+    <!-- 구글폰트 -->
+    <link href="https://fonts.googleapis.com/css?family=Stylish&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .info {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+        }
+
+        .info ol {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .info ul {
+            margin-bottom: 10px;
+        }
+
+        .info span {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .button {
+            margin: 10px 0;
+        }
+
+        .modal-content .box {
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .block {
+            margin-top: 20px;
+        }
+
+        .comment_text {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .comment_created_at, .comment_updated_at {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .comment_reply, .comment_edit, .comment_delete {
+            background-color: #3498db;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            cursor: pointer;
+            margin-right: 5px;
+            border-radius: 5px;
+        }
+
+        .comment_reply:hover, .comment_edit:hover, .comment_delete:hover {
+            background-color: #2980b9;
+        }
+
+        .reply_input {
+            margin-top: 10px;
+        }
+
+        .reply_textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .reply_submit {
+            background-color: #27ae60;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .reply_submit:hover {
+            background-color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <div> <span id="board"></span> </div>
+        <div> 
+            <ol>     
+                <ul><span class="name">상품명: </span><span id="name">상품명</span></ul>
+                <ul><span>링크: </span><span id="link"></span></ul>
+                <ul><span>가격: </span><span id="price"></span></ul>
+                <ul><span>마감일: </span><span id="deadline"></span></ul>
+                <ul><span>배송 방법: </span><span id="shipping"></span></ul>
+                <ul><span>수량: </span><span id="quantity"></span> / <span id="condition"></span></ul>
+                <ul><span>카테고리: </span><span id="category"></span></ul>
+            </ol>
+        </div>
+        <button id="edit" class="button is-info">상품 수정</button>
+        
+        <button id="openModal" class="button is-primary">모달 열기</button>
+        <div id="buy_modal" class="modal">
+            <div class="modal-background"></div>
+            <div class="modal-content">
+                <div class="box">
+                    <h1 class="title">모달 내용</h1>
+                    <p>여기서 필요한 내용을 보여주세요.</p>
+                </div>
+            </div>
+            <button class="modal-close is-large" aria-label="close"></button>
+        </div>
+    </div>
+
+    <div class="block">
+        <textarea id="write_comment" class="reply_textarea" placeholder="댓글을 작성해주세요"></textarea>
+        <button type="submit" onclick="new_comment()" class="button is-success">댓글 전송</button>
+    </div>
+
+    <div id="comments_list"></div>
+
+    <script>
+        $(document).ready(function() {
+            let params = window.location.href;  // 현재 URL을 가져옴
+            let post_id = params.split("/")[4]
+            $.ajax({
+                url: '/find_product/' + post_id,
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    if(response.result === "success") {
+                        $('#board').text(response.product.board);
+                        $('#name').text(response.product.name);
+                        $('#link').text(response.product.link);
+                        $('#price').text(response.product.price);
+                        $('#deadline').text(response.product.deadline);
+                        $('#shipping').text(response.product.shipping);
+                        $('#condition').text(response.product.condition);
+                        $('#category').text(response.product.category);
+                        $('#quantity').text(response.product.quantity);
+                    } else {
+                        console.error("상품을 찾을 수 없습니다.");
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("서버 오류:", error);
+                }
+            });
+            read_comment();
+        });
+
+        // 모달 열기
+        $('#openModal').click(function() {
+            $('#buy_modal').addClass('is-active');
+        });
+
+        // 모달 닫기
+        $('.modal-close').click(function() {
+            $('#buy_modal').removeClass('is-active');
+        });
+
+        // 모달 배경 클릭 시 닫기
+        $('.modal-background').click(function() {
+            $('#buy_modal').removeClass('is-active');
+        });
+
+        function new_comment() {
+            let params = window.location.href;  // 현재 URL을 가져옴
+            let post_id = params.split("/")[4];
+            let text = document.getElementById("write_comment").value;
+            $.ajax({
+                type: "POST",
+                url: '/new_comment',
+                data: { 
+                    "post_id": post_id, 
+                    "text": text,
+                },
+                success: function (response) { 
+                    if (response["result"] == "success") {
+                        alert("댓글이 작성되었습니다.");
+                        window.location.reload();
+                    } else {
+                        alert("server error");
+                    }
+                }
+            });
+        }
+
+        function read_comment() {
+            let params = window.location.href;  // 현재 URL을 가져옴
+            let post_id = params.split("/")[4];
+            $.ajax({
+                url: '/read_comment/' + post_id,
+                type: 'GET',
+                dataType: 'json',
+                success: function(response) {
+                    for (let i = 0; i < response.response.length; i++) {
+                        let comment = response.response[i];
+                        if (comment.status === 'valid') {
+                            make_comment(comment._id, comment.text, comment.created_at, comment.updated_at);
+                            if (Array.isArray(comment.replies) && comment.replies.status === "valid") {
+                                make_reply(comment._id, comment.replies._id, comment.replies.text, comment.replies.created_at, comment.replies.updated_at);
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        $(document).on('click', '.comment_reply', function() {
+            // 클릭한 댓글의 대댓글 입력창을 찾음
+            var replyInput = $(this).siblings('.reply_input');
+
+            // 다른 모든 대댓글 입력창 숨기기
+            $('.reply_input').not(replyInput).css("display", "none");
+
+            // 해당 대댓글 입력창 보이기 또는 숨기기
+            if (replyInput.css("display") === "none") {
+                replyInput.show();  // 보이기
+            } else {
+                replyInput.hide();  // 숨기기
+            }})
+            
+
+        function make_comment(C_id, C_text, C_created_at, C_updated_at) {
+            let div_comment = `
+                <div id="${C_id}">
+                    <p class="comment_text">${C_text}</p>
+                    <p class="comment_created_at">작성일: ${C_created_at}</p>
+                    <div>
+                        <button type="button" class="comment_reply">답글 달기</button>
+                        <button type="button" class="comment_edit">수정</button>
+                        <button type="button" class="comment_delete">삭제</button>
+                    </div>
+                    
+                    <div class="reply_input" style="display: none;">
+                        <textarea class="reply_textarea" placeholder="답글을 입력하세요"></textarea>
+                        <button type="submit" class="reply_submit button is-success">답글 전송</button>
+                    </div>
+
+
+                    
+                </div>`;
+            $("#comments_list").append(div_comment);
+        }
+
+        function make_reply(C_id, R_id, R_text, R_created_at, R_updated_at) {
+            let div_reply = `
+                <div id="${R_id}">
+                    <p class="comment_text">${R_text}</p>
+                    <p class="comment_created_at">작성일: ${R_created_at}</p>
+                    <div> 
+                        <button type="button" class="comment_edit">수정</button>
+                        <button type="button" class="comment_delete">삭제</button>
+                    </div>
+                </div>`;
+            let parentDiv = document.getElementById(C_id);
+            if (parentDiv) {
+                parentDiv.innerHTML += div_reply;
+            }
+        }
+    </script>
+</body>
+</html>l>
