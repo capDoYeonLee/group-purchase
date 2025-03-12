@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, redirect, make_response
+from flask import Flask, render_template, jsonify, request, redirect, make_response, session
 import requests
 from pymongo import MongoClient
 from datetime import datetime, timedelta, timezone
@@ -20,6 +20,24 @@ CORS(app, supports_credentials=True)
 
 scheduler = BackgroundScheduler(daemon=True)
 scheduler.start()
+
+@app.route("/api/check-login")
+def check_login():
+    token = request.cookies.get("access_token")  # 쿠키에서 JWT 토큰 가져오기
+    if not token:
+        return jsonify({"loggedIn": False})
+
+    try:
+        jwt.decode(token, JWT_SECRET, algorithms=["HS256"])  # 토큰 검증
+        return jsonify({"loggedIn": True})
+    except jwt.ExpiredSignatureError:
+        return jsonify({"loggedIn": False, "message": "토큰 만료"})
+    except jwt.InvalidTokenError:
+        return jsonify({"loggedIn": False, "message": "유효하지 않은 토큰"})
+
+
+
+
 
 def decode_token():
     auth_header = request.headers.get("Authorization")
