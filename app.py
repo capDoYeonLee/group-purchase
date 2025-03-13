@@ -341,8 +341,6 @@ def generate_token(user, token_expiry_days):
 @app.route('/new_comment', methods=['POST']) #id는 자동생성되는 친구 쓰는거로~
 @jwt_required
 def new_comment():
-    run_time = datetime.now() + timedelta(seconds=10)
-    scheduler.add_job(check_expired_products, 'date', run_date=run_time)
     print(request.form['post_id'])
     post_id = ObjectId(request.form['post_id'])  # 댓글을 추가할 게시글 ID
     #comment_author = 댓글 작성장의 슬렉 계정정
@@ -364,6 +362,10 @@ def new_comment():
         {"_id": post_id},
         {"$push": {"comments": comment}}
     )
+
+    # 시연용 스케쥴러
+    run_time = datetime.now() + timedelta(seconds=10)
+    scheduler.add_job(check_expired_products, 'date', run_date=run_time)
 
     if result.modified_count > 0:
         return jsonify({"result": "success", "message": "댓글이 추가되었습니다."})
